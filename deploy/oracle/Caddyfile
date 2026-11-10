@@ -1,0 +1,7 @@
+# Caddy gets and renews a free https certificate for SITE_DOMAIN automatically.
+{$SITE_DOMAIN} {
+	reverse_proxy app:10000 {
+		# Send file bytes to the browser as soon as they arrive.
+		flush_interval -1
+	}
+}

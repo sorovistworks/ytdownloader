@@ -11,6 +11,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.29 /uv /usr/local/bin/uv
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
+# YouTube changes often. Passing a new YTDLP_STAMP (e.g. today's date) rebuilds this
+# step and pulls the newest yt-dlp; leaving it empty keeps the locked version.
+ARG YTDLP_STAMP=""
+RUN if [ -n "$YTDLP_STAMP" ]; then uv pip install --python /app/.venv/bin/python --upgrade "yt-dlp[default]"; fi
 COPY app.py ./
 COPY static ./static
 

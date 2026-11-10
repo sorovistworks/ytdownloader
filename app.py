@@ -52,6 +52,22 @@ if os.environ.get("YTDLP_COOKIES"):
     COOKIES_FILE = str(ROOT / ".cookies.txt")
     # Pasted into a one-line env field, newlines may arrive as a literal "\n".
     Path(COOKIES_FILE).write_text(os.environ["YTDLP_COOKIES"].replace("\\n", "\n"), encoding="utf-8")
+# A cookies.txt dropped on the server (read-only mount) is copied somewhere yt-dlp may write to.
+COOKIES_SOURCE = os.environ.get("YTDLP_COOKIES_FILE", "")
+
+
+def cookie_file() -> str | None:
+    if COOKIES_FILE:
+        return COOKIES_FILE
+    if COOKIES_SOURCE and os.path.isfile(COOKIES_SOURCE):
+        dest = ROOT / ".cookies-from-file.txt"
+        try:
+            if not dest.exists() or dest.stat().st_mtime < os.path.getmtime(COOKIES_SOURCE):
+                shutil.copyfile(COOKIES_SOURCE, dest)
+            return str(dest)
+        except OSError:
+            return None
+    return None
 
 YOUTUBE_HOSTS = {"youtube.com", "youtu.be", "youtube-nocookie.com"}
 PUBLIC_FILES = {"manifest.webmanifest", "sw.js", "icon.svg", "icon-192.png", "icon-512.png", "apple-touch-icon.png"}
@@ -99,8 +115,9 @@ def base_opts() -> dict:
         "noprogress": True,
         "socket_timeout": 30,
     }
-    if COOKIES_FILE:
-        opts["cookiefile"] = COOKIES_FILE
+    cookies = cookie_file()
+    if cookies:
+        opts["cookiefile"] = cookies
     if PROXY:
         opts["proxy"] = PROXY
     return opts

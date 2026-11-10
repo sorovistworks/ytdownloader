@@ -18,27 +18,20 @@ Nothing is ever re-encoded. The chosen streams are downloaded exactly as YouTube
 
 **On phones:** open the site and choose *Add to Home Screen* (iPhone: Share > Add to Home Screen; Android: menu > Install app). On Android, the installed app then appears in the YouTube app's **Share** menu, which opens the video straight in the downloader.
 
-## Put it online (Render)
+## Put it online for free (recommended: Oracle Cloud)
 
-1. Open https://render.com/deploy?repo=https://github.com/sorovistworks/ytdownloader and sign in with GitHub.
-2. Type a family password in **APP_PASSWORD**. Leave `YTDLP_COOKIES` and `YTDLP_PROXY` empty for now. Press **Deploy**.
-3. After the build (about 5 minutes), Render shows the site's address, like `https://youtube-downloader-xxxx.onrender.com`. Share it and the password with your family.
+Follow [deploy/oracle/GUIDE.md](deploy/oracle/GUIDE.md). Oracle's Always Free plan gives a server that runs around the clock with 10 TB of downloads a month, at no cost. One script installs everything, sets up a free https address and keeps the downloader up to date every night.
 
-Every push to `main` redeploys the site.
+### Alternative: Render (light use only)
 
-### Keeping it awake
-
-Render's free plan puts the site to sleep after 15 minutes without visitors, and the next visit then takes about a minute. Two ways around that:
-
-- **Free:** in this GitHub repo, go to *Settings > Secrets and variables > Actions > Variables* and add `SITE_URL` with the site's address. The included workflow then visits the site every 10 minutes. GitHub runs these visits on a best-effort schedule and pauses scheduled workflows after 60 days without commits.
-- **Guaranteed:** switch the service to Render's paid Starter plan, which never sleeps.
+Render deploys straight from GitHub (https://render.com/deploy?repo=https://github.com/sorovistworks/ytdownloader), but its free plan includes only about 5 GB of downloads a month (roughly five 4K videos), sleeps after 15 minutes without visitors, and runs on a very small server. The `keep-awake` workflow keeps it awake if you add a `SITE_URL` repository variable.
 
 ### If YouTube blocks the server
 
 YouTube sometimes blocks cloud servers ("YouTube is blocking this server right now"). Fixes, in order:
 
-1. **Cookies:** sign in to YouTube with a spare Google account (not your main one), export its cookies as `cookies.txt` (for example with the "Get cookies.txt LOCALLY" browser extension) and paste the file's contents into the `YTDLP_COOKIES` setting on Render.
-2. **Proxy:** put a residential proxy address (`http://user:pass@host:port`) in `YTDLP_PROXY`. This is the most reliable fix and usually costs a few dollars a month.
+1. **Cookies:** sign in to YouTube with a spare Google account (not your main one) and export its cookies as `cookies.txt`. On Oracle, copy the file to `deploy/oracle/secrets/cookies.txt` on the server (the guide shows how); on Render, paste its contents into the `YTDLP_COOKIES` setting.
+2. **Proxy:** put a residential proxy address (`http://user:pass@host:port`) in `YTDLP_PROXY`. Most reliable, usually a few dollars a month.
 
 ### Settings (environment variables)
 
@@ -47,6 +40,7 @@ YouTube sometimes blocks cloud servers ("YouTube is blocking this server right n
 | `APP_PASSWORD` | Family password. Empty means anyone with the link can use it. |
 | `SECRET_KEY` | Signs the login cookie. Render generates it. |
 | `YTDLP_COOKIES` | Optional cookies.txt contents, only if YouTube blocks the server. |
+| `YTDLP_COOKIES_FILE` | Optional path to a cookies.txt file (the Oracle setup uses `/secrets/cookies.txt`). |
 | `YTDLP_PROXY` | Optional proxy, only if YouTube blocks the server. |
 | `MAX_ACTIVE` | Optional cap on simultaneous downloads. `0` (default) means no cap. |
 | `KEEP_FILES_FOR` | Seconds a finished file stays on the server for "Save again". Default 1800. |
