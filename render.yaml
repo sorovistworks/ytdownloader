@@ -7,6 +7,10 @@ services:
     autoDeploy: true
     envVars:
       - key: APP_PASSWORD
-        sync: false   # you type the family password in Render when deploying
+        sync: false   # the family password, typed in when deploying
       - key: SECRET_KEY
         generateValue: true
+      - key: YTDLP_COOKIES
+        sync: false   # optional: only if YouTube blocks the server
+      - key: YTDLP_PROXY
+        sync: false   # optional: only if YouTube blocks the server

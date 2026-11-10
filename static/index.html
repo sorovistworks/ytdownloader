@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>YouTube Downloader</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23161A22'/%3E%3Cpath d='M6 10h8c3 0 4 6 7 6h5' stroke='%235B7BFF' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M6 22h8c3 0 4-6 7-6' stroke='%23F2B23A' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="description" content="Download YouTube videos in full quality.">
+<meta name="theme-color" content="#e4e7eb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12151b" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Downloader">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
@@ -51,14 +58,16 @@
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
-  main { max-width: 700px; margin: 0 auto; padding: 40px 16px 48px; }
+  main { max-width: 700px; margin: 0 auto; padding: max(36px, env(safe-area-inset-top)) 16px 48px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* ---------- masthead */
   .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-stretch: var(--wide); font-size: 15px; }
   .brand svg { display: block; }
   h1 {
-    margin: 44px 0 12px;
+    margin: 40px 0 14px;
     font-size: clamp(30px, 5.4vw, 42px);
     line-height: 1.06;
     font-weight: 720;
@@ -73,11 +82,9 @@
   .points li:nth-child(1) { --dot: var(--video); }
   .points li:nth-child(2) { --dot: var(--ink); }
   .points li:nth-child(3) { --dot: var(--audio); }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-  /* ---------- link field */
-  .link { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-  .link label { grid-column: 1 / -1; font-size: 14px; font-weight: 600; }
+  /* ---------- inputs */
+  .bar-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
   .field {
     display: flex; align-items: center; min-width: 0;
     background: var(--panel); border: 1.5px solid var(--line); border-radius: 10px;
@@ -85,9 +92,10 @@
   .field:focus-within { border-color: var(--ink); }
   .field input {
     flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--ink);
-    font: inherit; font-size: 16px; padding: 14px 14px;
+    font: inherit; font-size: 16px; padding: 14px;
   }
-  .field input::placeholder { color: var(--muted); opacity: .8; }
+  .field input::placeholder { color: var(--muted); opacity: .85; }
+  .field input::-webkit-search-cancel-button { display: none; }
 
   button, .btn {
     font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; border-radius: 10px;
@@ -105,10 +113,20 @@
   .msg.error { color: var(--danger); }
   .msg:empty { display: none; }
 
-  /* ---------- video panel */
-  .video { margin-top: 28px; background: var(--panel); border-radius: 16px; padding: 22px; }
-  .video[hidden] { display: none; }
+  /* ---------- search results */
+  .results { margin-top: 20px; display: grid; gap: 6px; }
+  .result {
+    display: grid; grid-template-columns: 128px 1fr; gap: 14px; align-items: center; text-align: left;
+    width: 100%; padding: 8px; border-radius: 12px; border: 0; background: var(--panel); color: var(--ink);
+    font-weight: 400;
+  }
+  .result:hover { box-shadow: inset 0 0 0 1.5px var(--line); }
+  .result img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 7px; background: var(--track); display: block; }
+  .result b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; font-size: 15px; line-height: 1.3; }
+  .result small { display: flex; gap: 10px; color: var(--muted); font-size: 13px; margin-top: 3px; }
 
+  /* ---------- video panel */
+  .video { margin-top: 24px; background: var(--panel); border-radius: 16px; padding: 22px; }
   .clip { display: grid; grid-template-columns: 168px 1fr; gap: 16px; align-items: start; }
   .thumb { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--track); }
   .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -122,11 +140,21 @@
   }
   .clip p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 
+  /* ---------- format choice */
+  .seg { display: flex; padding: 3px; gap: 3px; border-radius: 11px; background: var(--track); margin: 22px 0 0; border: 0; min-width: 0; }
+  .seg label { position: relative; cursor: pointer; flex: 1; text-align: center; }
+  .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .seg span { display: block; padding: 9px 8px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--muted); }
+  .seg input:checked + span { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .seg input:focus-visible + span { outline: 2px solid var(--video); outline-offset: 1px; }
+  .seg input:disabled + span { opacity: .4; cursor: default; }
+  .hint { margin: 8px 2px 0; color: var(--muted); font-size: 14px; }
+
   /* ---------- the stream diagram: two lanes that join into one file */
   .flow {
     --head: 26px; --bar: 10px;
     display: grid; grid-template-columns: 1fr 44px auto;
-    row-gap: 18px; margin: 26px 0 24px;
+    row-gap: 18px; margin: 22px 0;
   }
   .lane { grid-column: 1; min-width: 0; }
   .lane.v { grid-row: 1; --c: var(--video); }
@@ -167,50 +195,33 @@
   .flow.done .file { background: var(--ink); border: 2px solid var(--ink); color: var(--panel); }
   .flow.done .file .ext { color: var(--panel); }
 
-  /* ---------- format + action */
-  .formats { border: 0; padding: 0; margin: 0; }
-  .formats legend { font-size: 14px; font-weight: 600; padding: 0; margin-bottom: 8px; }
-  .seg { display: inline-flex; padding: 3px; gap: 3px; border-radius: 11px; background: var(--track); }
-  .seg label { position: relative; cursor: pointer; }
-  .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-  .seg span { display: block; padding: 8px 16px; border-radius: 8px; font-size: 15px; font-weight: 600; color: var(--muted); }
-  .seg input:checked + span { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
-  .seg input:focus-visible + span { outline: 2px solid var(--video); outline-offset: 1px; }
-  .seg input:disabled + span { cursor: default; }
-  .formats { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .hint { margin: 0; color: var(--muted); font-size: 14px; }
-
-  .act { display: flex; align-items: center; gap: 16px; margin-top: 22px; flex-wrap: wrap; }
-  .act .go { padding: 14px 26px; font-size: 16px; }
+  /* ---------- action */
+  .act { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .act .go { padding: 14px 30px; font-size: 16px; }
   .status { font-size: 14px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
   .status strong { color: var(--ink); font-weight: 600; }
 
-  .done-box { margin-top: 18px; font-size: 15px; }
-  .done-box[hidden] { display: none; }
+  .done-box { margin-top: 16px; font-size: 15px; }
   .done-box .name { font-weight: 600; word-break: break-word; }
   .done-box .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
   .spin { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
-          animation: r .7s linear infinite; }
+          animation: r .7s linear infinite; flex: none; }
   @keyframes r { to { transform: rotate(360deg); } }
 
-  footer { margin-top: 20px; color: var(--muted); font-size: 14px; }
-
   @media (max-width: 600px) {
-    main { padding-top: 24px; }
-    h1 { margin-top: 32px; }
-    .link { grid-template-columns: 1fr; }
+    main { padding-top: max(22px, env(safe-area-inset-top)); }
+    h1 { margin-top: 28px; }
     .video { padding: 16px; }
     .clip { grid-template-columns: 116px 1fr; gap: 12px; }
     .clip h2 { font-size: 15px; }
+    .result { grid-template-columns: 112px 1fr; gap: 12px; }
     .flow { grid-template-columns: 1fr; }
     .lane-head { height: auto; flex-wrap: wrap; row-gap: 2px; margin-bottom: 6px; white-space: normal; }
     .spec { flex-wrap: wrap; row-gap: 0; overflow: visible; }
     .join { display: none; }
     .file { grid-column: 1; grid-row: 3; margin-top: 0; width: auto; display: flex; align-items: baseline; gap: 10px; }
-    .seg { display: flex; }
-    .seg label { flex: 1; text-align: center; }
-    .seg span { padding: 8px 6px; }
+    .seg span { padding: 9px 4px; font-size: 14px; }
     .act .go { width: 100%; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -235,21 +246,23 @@
     <li>Original audio</li>
   </ul>
 
-  <form class="link" id="gate" hidden>
+  <form class="bar-form" id="gate" hidden>
     <label for="pw" class="sr">Family password</label>
     <div class="field"><input id="pw" type="password" placeholder="Family password" autocomplete="current-password" required></div>
     <button type="submit">Unlock</button>
   </form>
 
-  <form class="link" id="urlForm" autocomplete="off">
-    <label for="url" class="sr">YouTube link</label>
+  <form class="bar-form" id="findForm" autocomplete="off">
+    <label for="q" class="sr">YouTube link or search words</label>
     <div class="field">
-      <input id="url" type="url" inputmode="url" placeholder="Paste a YouTube link" required>
+      <input id="q" type="search" enterkeyhint="go" placeholder="Paste a link or search YouTube" required>
       <button type="button" class="paste" id="pasteBtn">Paste</button>
     </div>
-    <button id="fetchBtn" type="submit">Get video</button>
+    <button id="findBtn" type="submit">Find</button>
   </form>
   <p class="msg" id="msg" role="status" aria-live="polite"></p>
+
+  <div class="results" id="results" hidden></div>
 
   <section class="video" id="video" hidden>
     <div class="clip">
@@ -259,6 +272,14 @@
         <p id="channel"></p>
       </div>
     </div>
+
+    <fieldset class="seg">
+      <legend class="sr">Format</legend>
+      <label><input type="radio" name="mode" value="best" checked><span>Best quality</span></label>
+      <label><input type="radio" name="mode" value="compat"><span>Plays everywhere</span></label>
+      <label><input type="radio" name="mode" value="audio"><span>Audio</span></label>
+    </fieldset>
+    <p class="hint" id="hint"></p>
 
     <div class="flow" id="flow" aria-label="Streams that will be downloaded">
       <div class="lane v" id="laneV">
@@ -273,18 +294,8 @@
       <div class="file"><span class="ext" id="ext">.mp4</span><span class="fsize" id="fsize"></span></div>
     </div>
 
-    <fieldset class="formats">
-      <legend class="sr">Format</legend>
-      <div class="seg">
-        <label><input type="radio" name="mode" value="mp4" checked><span>MP4</span></label>
-        <label><input type="radio" name="mode" value="mkv"><span>MKV</span></label>
-        <label><input type="radio" name="mode" value="audio"><span>Audio only</span></label>
-      </div>
-      <p class="hint" id="hint"></p>
-    </fieldset>
-
     <div class="act">
-      <button class="go" id="goBtn">Download MP4</button>
+      <button class="go" id="goBtn">Download</button>
       <div class="status" id="status" aria-live="polite"></div>
     </div>
 
@@ -296,21 +307,20 @@
       </div>
     </div>
   </section>
-
-  <footer>No picture when playing? Open the file in VLC.</footer>
 </main>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const HINTS = {
-  mp4: "Plays everywhere",
-  mkv: "Best for VLC and editing",
-  audio: "Sound only, original quality",
+  best: "Highest resolution and frame rate. If it won't play, use VLC.",
+  compat: "Plays on any phone, TV or computer.",
+  audio: "Just the sound, as an M4A file.",
 };
-const LABELS = { mp4: "Download", mkv: "Download", audio: "Download" };
-let current = null, info = null, busy = false;
+const ACTIVE_KEY = "ytd.active";
+let current = null, info = null, busy = false, lastResults = null;
 
 const mode = () => document.querySelector('input[name="mode"]:checked').value;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function setMsg(text, isError = false) { $("msg").textContent = text || ""; $("msg").classList.toggle("error", !!isError); }
 function fmtTime(s) {
   if (s == null) return "";
@@ -324,33 +334,122 @@ function fmtSize(b) {
   while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
   return b.toFixed(i >= 3 ? 2 : i ? 1 : 0) + " " + u[i];
 }
-function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; return e; }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function store(v) { try { v ? localStorage.setItem(ACTIVE_KEY, JSON.stringify(v)) : localStorage.removeItem(ACTIVE_KEY); } catch {} }
+function stored() { try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || "null"); } catch { return null; } }
+function friendly(e) { return e.message === "Failed to fetch" || e.name === "TypeError" ? "No connection to the server. Try again." : e.message; }
 
+async function api(path, body) {
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
+  let data = {};
+  try { data = await r.json(); } catch {}
+  if (data.locked) lockPage(true);
+  return { r, data };
+}
+
+/* ---------- password */
+function lockPage(on) {
+  $("gate").hidden = !on;
+  $("findForm").hidden = on;
+  if (on) { $("video").hidden = true; $("results").hidden = true; }
+  (on ? $("pw") : $("q")).focus({ preventScroll: true });
+}
+$("gate").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = $("gate").querySelector("button");
+  btn.disabled = true;
+  try {
+    const { r } = await api("/api/login", { password: $("pw").value });
+    if (r.ok) { setMsg(""); $("pw").value = ""; lockPage(false); afterUnlock(); }
+    else { setMsg("Wrong password.", true); $("pw").select(); }
+  } catch { setMsg("No connection. Try again.", true); }
+  finally { btn.disabled = false; }
+});
+
+/* ---------- find: link or search */
+async function find(text) {
+  text = (text || "").trim();
+  if (busy || !text) return;
+  if (text === current && info) return;
+  setMsg("");
+  const btn = $("findBtn");
+  btn.disabled = true;
+  btn.replaceChildren(el("span", "spin"), document.createTextNode("Finding"));
+  try {
+    const { r, data } = await api("/api/lookup", { q: text });
+    if (!r.ok) throw new Error(data.error || "That didn't work. Check the link and try again.");
+    if (data.kind === "results") showResults(data.results);
+    else showVideo(data.video, text);
+  } catch (e) {
+    setMsg(friendly(e), true);
+  } finally {
+    btn.disabled = false; btn.textContent = "Find";
+  }
+}
+
+function showResults(list) {
+  lastResults = list;
+  info = null; current = null;
+  $("video").hidden = true;
+  const box = $("results");
+  box.replaceChildren(...list.map((v) => {
+    const b = el("button", "result");
+    b.type = "button";
+    const img = el("img"); img.src = v.thumbnail; img.alt = ""; img.loading = "lazy";
+    const text = el("div");
+    const meta = el("small");
+    if (v.channel) meta.append(el("span", "", v.channel));
+    if (v.duration) meta.append(el("span", "", fmtTime(v.duration)));
+    text.append(el("b", "", v.title || "Untitled video"), meta);
+    b.append(img, text);
+    b.addEventListener("click", () => { $("q").value = v.url; find(v.url); });
+    return b;
+  }));
+  box.hidden = false;
+}
+
+function showVideo(v, url) {
+  if (v.is_live) throw new Error("This is a live stream. It can be downloaded after it ends.");
+  info = v; current = url;
+  $("results").hidden = true;
+  $("thumb").src = v.thumbnail || "";
+  $("dur").textContent = fmtTime(v.duration); $("dur").hidden = !v.duration;
+  $("title").textContent = v.title || "Untitled video";
+  $("channel").textContent = v.channel || "";
+  const radios = [...document.querySelectorAll('input[name="mode"]')];
+  radios.forEach((i) => { i.disabled = !v.modes[i.value]; });
+  if (document.querySelector('input[name="mode"]:checked').disabled) {
+    const first = radios.find((i) => !i.disabled);
+    if (first) first.checked = true;
+  }
+  resetJob(); renderFlow();
+  $("video").hidden = false;
+  $("video").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/* ---------- the stream diagram */
 function renderFlow() {
-  const m = mode(), v = info.video, a = info.audio;
+  const m = mode(), p = info.modes[m] || {};
+  const v = p.video, a = p.audio;
   const sv = $("specV"); sv.replaceChildren();
   if (v) {
-    sv.append(el("b", "", v.width && v.height ? `${v.width} × ${v.height}` : v.label));
+    sv.append(el("b", "", v.width && v.height ? `${v.width} × ${v.height}` : "Video"));
     if (v.fps) sv.append(el("span", v.fps >= 50 ? "tag" : "", Math.round(v.fps) + " fps"));
     if (v.hdr) sv.append(el("span", "tag", "HDR"));
     if (v.codec) sv.append(el("span", "", v.codec));
-  } else sv.append(el("span", "", "Not available"));
+  } else sv.append(el("span", "", m === "audio" ? "Not included" : "Not available"));
   const sa = $("specA"); sa.replaceChildren();
   if (a) {
     sa.append(el("b", "", a.kbps ? a.kbps + " kbps" : a.codec));
     if (a.codec && a.kbps) sa.append(el("span", "", a.codec));
     if (a.channels) sa.append(el("span", "", a.channels === 1 ? "mono" : a.channels === 2 ? "stereo" : a.channels === 6 ? "5.1" : a.channels + " ch"));
     if (a.khz) sa.append(el("span", "", a.khz + " kHz"));
-  } else sa.append(el("span", "", "Included in the video stream"));
-
-  const audioOnly = m === "audio";
-  $("laneV").classList.toggle("off", audioOnly);
-  $("flow").classList.toggle("audio-only", audioOnly);
-  $("ext").textContent = audioOnly ? (a && a.codec === "AAC" ? ".m4a" : ".opus") : "." + m;
-  const size = audioOnly ? info.audio_size : info.size;
-  $("fsize").textContent = size ? "about " + fmtSize(size) : "";
+  } else sa.append(el("span", "", "Inside the video stream"));
+  $("laneV").classList.toggle("off", m === "audio");
+  $("flow").classList.toggle("audio-only", m === "audio");
+  $("ext").textContent = "." + (p.ext || "mp4");
+  $("fsize").textContent = p.size ? "about " + fmtSize(p.size) : "";
   $("hint").textContent = HINTS[m];
-  $("goBtn").textContent = LABELS[m];
 }
 
 function setLane(which, pct) {
@@ -364,124 +463,143 @@ function resetJob() {
   $("flow").classList.remove("joining", "done");
   $("status").replaceChildren();
   $("doneBox").hidden = true;
-  $("goBtn").hidden = false; $("goBtn").disabled = false;
-  document.querySelectorAll('input[name="mode"]').forEach((i) => (i.disabled = false));
+  $("goBtn").hidden = false;
+}
+function setStatus(...parts) {
+  const s = $("status"); s.replaceChildren();
+  parts.filter(Boolean).forEach((t, i) => s.append(el(i ? "span" : "strong", "", t)));
+}
+function showProgress(p, m) {
+  if (p.kind === "video") setLane("V", p.part_pct);
+  if (p.kind === "audio") { if (m !== "audio" && info.modes[m] && info.modes[m].video) setLane("V", 100); setLane("A", p.part_pct); }
+  if (p.phase === "join") { if (m !== "audio") setLane("V", 100); setLane("A", 100); $("flow").classList.add("joining"); }
+  setStatus(p.stage || "Starting",
+            p.speed && !p.phase ? fmtSize(p.speed) + "/s" : "",
+            p.total && !p.phase ? fmtSize(p.downloaded) + " of " + fmtSize(p.total) : "");
 }
 
-async function fetchInfo(url) {
-  url = (url || "").trim();
-  if (busy || !url || (url === current && info)) return;
-  setMsg("");
-  const btn = $("fetchBtn");
-  btn.disabled = true;
-  btn.replaceChildren(el("span", "spin", ""), document.createTextNode("Reading link"));
-  $("video").hidden = true;
-  try {
-    const r = await fetch("/api/info", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
-    const data = await r.json();
-    if (data.locked) lockPage(true);
-    if (!r.ok) throw new Error(data.error || "That link could not be read. Check that it opens a YouTube video.");
-    if (data.is_live) throw new Error("This is a live stream. It can be downloaded once the stream has ended.");
-    info = data; current = url;
-    $("thumb").src = data.thumbnail || "";
-    $("dur").textContent = fmtTime(data.duration); $("dur").hidden = !data.duration;
-    $("title").textContent = data.title || "Untitled video";
-    $("channel").textContent = data.channel || "";
-    resetJob(); renderFlow();
-    $("video").hidden = false;
-  } catch (e) {
-    info = null; current = null; setMsg(e.message, true);
-  } finally {
-    btn.disabled = false; btn.textContent = "Get video";
+/* ---------- download, with reconnects */
+function lockControls(on) {
+  $("goBtn").disabled = on;
+  $("findBtn").disabled = on;
+  document.querySelectorAll('input[name="mode"]').forEach((i) => { i.disabled = on || !(info && info.modes[i.value]); });
+}
+
+async function pollJob(job, m) {
+  let fails = 0;
+  while (true) {
+    await sleep(fails ? Math.min(10000, 800 * 2 ** fails) : 700);
+    let res = null;
+    try { res = await api("/api/progress/" + job); } catch {}
+    if (!res || res.r.status >= 500) {
+      if (++fails > 12) throw new Error("Lost connection to the server. Check your internet and try again.");
+      setStatus("Reconnecting");
+      continue;
+    }
+    fails = 0;
+    const { r, data: p } = res;
+    if (!r.ok) throw new Error(p.error || "The download stopped. Try again.");
+    if (p.status === "error") throw new Error(p.error);
+    if (p.status === "done") return p;
+    showProgress(p, m);
   }
 }
 
-function showProgress(p) {
-  const m = mode();
-  if (p.kind === "video") setLane("V", p.part_pct);
-  if (p.kind === "audio") { if (m !== "audio" && info.video) setLane("V", 100); setLane("A", p.part_pct); }
-  if (p.phase === "join") { if (m !== "audio") setLane("V", 100); setLane("A", 100); $("flow").classList.add("joining"); }
-  const s = $("status"); s.replaceChildren();
-  s.append(el("strong", "", p.stage || "Starting"));
-  if (p.speed && !p.phase) s.append(el("span", "", fmtSize(p.speed) + "/s"));
-  if (p.total && !p.phase) s.append(el("span", "", fmtSize(p.downloaded) + " of " + fmtSize(p.total)));
+function finish(job, p, m) {
+  if (m !== "audio") setLane("V", 100);
+  setLane("A", 100);
+  $("flow").classList.remove("joining"); $("flow").classList.add("done");
+  $("fsize").textContent = fmtSize(p.size);
+  const dot = p.file.lastIndexOf(".");
+  if (dot > 0) $("ext").textContent = p.file.slice(dot);
+  setStatus("Saved to Downloads");
+  $("goBtn").hidden = true;
+  const href = "/api/file/" + job;
+  $("again").href = href;
+  $("fileName").textContent = p.file;
+  $("doneBox").hidden = false;
+  const a = document.createElement("a"); a.href = href; a.download = p.file;
+  document.body.append(a); a.click(); a.remove();
 }
 
-async function startDownload() {
+async function runDownload(existingJob) {
   if (!info || busy) return;
   busy = true;
   const m = mode();
-  setMsg(""); resetJob();
-  $("goBtn").disabled = true;
-  document.querySelectorAll('input[name="mode"]').forEach((i) => (i.disabled = true));
-  $("fetchBtn").disabled = true;
-  showProgress({ stage: "Preparing" });
+  setMsg("");
+  resetJob();
+  lockControls(true);
+  setStatus(existingJob ? "Resuming" : "Preparing");
   try {
-    const r = await fetch("/api/download", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: current, mode: m }) });
-    const data = await r.json();
-    if (data.locked) lockPage(true);
-    if (!r.ok) throw new Error(data.error || "The download could not start.");
-    while (true) {
-      await new Promise((res) => setTimeout(res, 600));
-      const pr = await fetch("/api/progress/" + data.job);
-      const p = await pr.json();
-      if (!pr.ok) throw new Error(p.error || "The download stopped responding. Try again.");
-      if (p.status === "error") throw new Error(p.error);
-      if (p.status === "done") {
-        if (m !== "audio") setLane("V", 100);
-        setLane("A", 100);
-        $("flow").classList.remove("joining"); $("flow").classList.add("done");
-        $("fsize").textContent = fmtSize(p.size);
-        const dot = p.file.lastIndexOf(".");
-        if (dot > 0) $("ext").textContent = p.file.slice(dot);
-        $("status").replaceChildren(el("strong", "", "Saved to Downloads"));
-        $("goBtn").hidden = true;
-        const href = "/api/file/" + data.job;
-        $("again").href = href;
-        $("fileName").textContent = p.file;
-        $("doneBox").hidden = false;
-        const a = document.createElement("a"); a.href = href; a.download = p.file;
-        document.body.append(a); a.click(); a.remove();
-        break;
-      }
-      showProgress(p);
+    let job = existingJob;
+    if (!job) {
+      const { r, data } = await api("/api/download", { url: current, mode: m });
+      if (!r.ok) throw new Error(data.error || "The download could not start.");
+      job = data.job;
+      store({ job, url: current, mode: m });
     }
+    const p = await pollJob(job, m);
+    store(null);
+    finish(job, p, m);
   } catch (e) {
-    resetJob(); setMsg(e.message, true);
+    store(null);
+    resetJob();
+    setMsg(friendly(e), true);
   } finally {
-    busy = false; $("fetchBtn").disabled = false;
+    busy = false;
+    lockControls(false);
   }
 }
 
-function lockPage(on) {
-  $("gate").hidden = !on;
-  $("urlForm").hidden = on;
-  if (on) { $("video").hidden = true; info = null; current = null; }
-  (on ? $("pw") : $("url")).focus();
-}
-fetch("/api/session").then((r) => r.json()).then((d) => { if (!d.ok) lockPage(true); }).catch(() => {});
-$("gate").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const btn = e.submitter || $("gate").querySelector("button");
-  btn.disabled = true;
-  try {
-    const r = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: $("pw").value }) });
-    if (r.ok) { setMsg(""); $("pw").value = ""; lockPage(false); }
-    else { setMsg("Wrong password.", true); $("pw").select(); }
-  } catch { setMsg("No connection. Try again.", true); }
-  finally { btn.disabled = false; }
-});
-$("urlForm").addEventListener("submit", (e) => { e.preventDefault(); fetchInfo($("url").value); });
-$("url").addEventListener("paste", () => setTimeout(() => fetchInfo($("url").value), 0));
+/* ---------- wiring */
+$("findForm").addEventListener("submit", (e) => { e.preventDefault(); find($("q").value); });
+$("q").addEventListener("paste", () => setTimeout(() => { if (/youtu\.?be/i.test($("q").value)) find($("q").value); }, 0));
 $("pasteBtn").addEventListener("click", async () => {
-  try { const t = await navigator.clipboard.readText(); $("url").value = t.trim(); fetchInfo(t); }
-  catch { $("url").focus(); setMsg("Press Ctrl+V to paste the link."); }
+  try { const t = (await navigator.clipboard.readText()).trim(); $("q").value = t; find(t); }
+  catch { $("q").focus(); setMsg("Press and hold in the box, then choose Paste."); }
 });
-$("goBtn").addEventListener("click", startDownload);
-document.querySelectorAll('input[name="mode"]').forEach((i) => i.addEventListener("change", () => { if (info) { resetJob(); renderFlow(); } }));
+$("goBtn").addEventListener("click", () => runDownload());
+document.querySelectorAll('input[name="mode"]').forEach((i) => i.addEventListener("change", () => { if (info && !busy) { resetJob(); renderFlow(); } }));
 $("another").addEventListener("click", () => {
-  current = null; info = null; $("video").hidden = true; $("url").value = ""; $("url").focus();
+  current = null; info = null; $("video").hidden = true; $("q").value = ""; $("q").focus();
+  if (lastResults) $("results").hidden = false;
 });
+
+/* Links shared from the YouTube app arrive as ?text=... or ?url=... */
+function sharedLink() {
+  const params = new URLSearchParams(location.search);
+  const blob = [params.get("url"), params.get("text"), params.get("title")].filter(Boolean).join(" ");
+  const match = blob.match(/https?:\/\/\S*(?:youtube\.com|youtu\.be)\S*/i);
+  if (params.toString()) history.replaceState(null, "", "/");
+  return match ? match[0] : null;
+}
+const shared = sharedLink();
+
+async function afterUnlock() {
+  const active = stored();
+  if (active) {
+    $("q").value = active.url;
+    await find(active.url);
+    if (info) {
+      const radio = document.querySelector(`input[name="mode"][value="${active.mode}"]`);
+      if (radio && !radio.disabled) { radio.checked = true; renderFlow(); }
+      runDownload(active.job);
+    } else store(null);
+  } else if (shared) {
+    $("q").value = shared;
+    find(shared);
+  }
+}
+
+(async () => {
+  try {
+    const { data } = await api("/api/session");
+    if (!data.ok) { lockPage(true); return; }
+  } catch {}
+  afterUnlock();
+})();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>
 </body>
 </html>
