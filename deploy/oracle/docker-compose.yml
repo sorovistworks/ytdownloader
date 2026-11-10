@@ -1,0 +1,35 @@
+# YouTube Downloader on one server: the app, plus Caddy for the free https certificate.
+# Settings (SITE_DOMAIN, APP_PASSWORD, SECRET_KEY) live in .env next to this file;
+# setup.sh writes it.
+services:
+  app:
+    build:
+      context: ../..
+      args:
+        YTDLP_STAMP: ${YTDLP_STAMP:-}
+    env_file: .env
+    environment:
+      SECURE_COOKIES: "1"
+      YTDLP_COOKIES_FILE: /secrets/cookies.txt
+    volumes:
+      - ./secrets:/secrets:ro
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

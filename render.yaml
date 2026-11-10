@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: youtube-downloader
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: APP_PASSWORD
+        sync: false   # the family password, typed in when deploying
+      - key: SECRET_KEY
+        generateValue: true
+      - key: YTDLP_COOKIES
+        sync: false   # optional: only if YouTube blocks the server
+      - key: YTDLP_PROXY
+        sync: false   # optional: only if YouTube blocks the server
