@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: youtube-downloader
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: APP_PASSWORD
+        sync: false   # you type the family password in Render when deploying
+      - key: SECRET_KEY
+        generateValue: true

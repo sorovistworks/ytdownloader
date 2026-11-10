@@ -1,0 +1,6 @@
+.venv/
+.git/
+downloads/
+__pycache__/
+.cookies.txt
+start.bat
